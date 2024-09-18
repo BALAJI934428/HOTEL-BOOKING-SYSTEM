@@ -4,8 +4,10 @@ import {
   deleteUser,
   getUser,
   getAllUsers,
-} from "../controllers/user.js";
+} from "../controllers/userController.js";
+import { verifyToken } from "../utils/verifyToken.js";
 const router = express.Router();
+router.get("/checkToken", verifyToken, getAllUsers);
 
 //UPDATE
 router.put("/:id", updateUser);
