@@ -25,7 +25,12 @@ mongoose.connection.on("connected", () => {
 });
 
 //middleware
-app.use("/auth", authRoute);
+app.use(express.json());
+app.use("/api/auth", authRoute);
+app.use("/api/users", userRoute);
+app.use("/api/hotels", hotelRoute);
+app.use("/api/rooms", roomRoute);
+
 app.listen(8800, () => {
   connect();
   console.log("connected Port 8800");
