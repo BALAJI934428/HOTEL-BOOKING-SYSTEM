@@ -78,9 +78,12 @@ export const getHotel = async (req, res, next) => {
  * @access Public
  */
 export const getAllHotels = async (req, res, next) => {
-  const { limit, ...others } = req.query;
+  const { limit, min, max, ...others } = req.query;
   try {
-    const hotels = await Hotel.find({ ...others }).limit(limit);
+    const hotels = await Hotel.find({
+      ...others,
+      cheapestPrice: { $gt: min || 1, $lt: max || 999 },
+    }).limit(limit);
     if (!hotels) {
       return next(createError(404, "No hotels found"));
     }
