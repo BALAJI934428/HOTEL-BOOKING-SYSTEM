@@ -5,17 +5,36 @@ import {
   getUser,
   getAllUsers,
 } from "../controllers/userController.js";
-import { verifyToken } from "../utils/verifyToken.js";
+import { verifyAdmin, verifyToken } from "../utils/verifyToken.js";
 const router = express.Router();
-router.get("/checkToken", verifyToken, getAllUsers);
 
 //UPDATE
-router.put("/:id", updateUser);
+router.put("/:id", verifyToken, (req, res, next) => {
+  if (!req.body) {
+    return next(createError(400, "No data provided"));
+  }
+  updateUser(req, res, next);
+});
+router.put("/:id", verifyToken, updateUser);
 //DELETE
-router.delete("/:id", deleteUser);
+router.delete("/:id", verifyToken, verifyAdmin, (req, res, next) => {
+  if (!req.params.id) {
+    return next(createError(400, "No id provided"));
+  }
+  deleteUser(req, res, next);
+});
 //GET
-router.get("/:id", getUser);
+router.get("/:id", verifyToken, (req, res, next) => {
+  if (!req.params.id) {
+    return next(createError(400, "No id provided"));
+  }
+  getUser(req, res, next);
+});
+router.get("/:id", verifyToken, getUser);
 //GETALL
-router.get("/", getAllUsers);
+router.get("/", verifyToken, verifyAdmin, (req, res, next) => {
+  getAllUsers(req, res, next);
+});
+router.get("/", verifyToken, verifyAdmin, getAllUsers);
 
 export default router;
