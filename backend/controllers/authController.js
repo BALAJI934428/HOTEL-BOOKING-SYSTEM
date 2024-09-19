@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createError } from "../utils/error.js";
+
 export const register = async (req, res, next) => {
   try {
     const salt = bcrypt.genSaltSync(10);
@@ -42,6 +43,17 @@ export const login = async (req, res, next) => {
       })
       .status(200)
       .json({ ...otherDetails });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const logout = async (req, res, next) => {
+  try {
+    res.cookie("access_token", null, {
+      httpOnly: true,
+    });
+    res.status(200).json("User has been logged out.");
   } catch (err) {
     next(err);
   }
