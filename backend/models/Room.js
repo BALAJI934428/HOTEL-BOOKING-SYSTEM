@@ -1,16 +1,25 @@
-import {
-  createRoom,
-  updateRoom,
-  deleteRoom,
-  getRoom,
-  getAllRooms,
-} from "../controllers/roomController.js";
+import mongoose from "mongoose";
+const RoomSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    maxPeople: {
+      type: Number,
+      required: true,
+    },
+    desc: {
+      type: String,
+      required: true,
+    },
+    roomNumbers: [{ number: Number, unavailableDates: { type: [Date] } }],
+  },
+  { timestamps: true }
+);
 
-connect();
-router.post("/", createRoom);
-router.put("/:id", updateRoom);
-router.delete("/:id", deleteRoom);
-router.get("/:id", getRoom);
-router.get("/", getAllRooms);
-
-export default router;
+export default mongoose.model("Room", RoomSchema);

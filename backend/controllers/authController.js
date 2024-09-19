@@ -5,16 +5,24 @@ import { createError } from "../utils/error.js";
 
 export const register = async (req, res, next) => {
   try {
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(req.body.password, salt);
-
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(req.body.password, salt);
+    if (!hash) {
+      console.error("Error hashing password: No hash returned.");
+      return next(createError(500, "Error hashing password."));
+    }
+    console.log(hash, "balaji");
     const newUser = new User({
-      ...req.body,
+      username: req.body.username,
+      email: req.body.email,
       password: hash,
     });
-
-    await newUser.save();
-    res.status(200).send("User has been created.");
+    const savedUser = await newUser.save();
+    if (!savedUser) {
+      console.error("Error saving user: No user returned.");
+      return next(createError(500, "Error saving user."));
+    }
+    res.status(201).send("User has been created.");
   } catch (err) {
     next(err);
   }
