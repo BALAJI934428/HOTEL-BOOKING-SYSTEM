@@ -57,7 +57,7 @@ export const deleteHotel = async (req, res, next) => {
 
 /**
  * @desc   Get a hotel
- * @route  GET /api/hotels/:id
+ * @route  GET /api/hotels/find/:id
  * @access Public
  */
 export const getHotel = async (req, res, next) => {
@@ -78,10 +78,53 @@ export const getHotel = async (req, res, next) => {
  * @access Public
  */
 export const getAllHotels = async (req, res, next) => {
+  const { limit, ...others } = req.query;
   try {
-    const hotels = await Hotel.find();
+    const hotels = await Hotel.find({ ...others }).limit(limit);
+    if (!hotels) {
+      return next(createError(404, "No hotels found"));
+    }
+
     res.status(200).json(hotels);
   } catch (error) {
+    if (error.name === "CastError") {
+      return next(createError(400, "Invalid query parameter"));
+    }
+
     next(error);
+  }
+};
+
+export const countByCity = async (req, res, next) => {
+  const cities = req.query.cities.split(",");
+  try {
+    const list = await Promise.all(
+      cities.map((city) => {
+        return Hotel.countDocuments({ city: city });
+      })
+    );
+    res.status(200).json(list);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const countByType = async (req, res, next) => {
+  try {
+    const hotelCount = await Hotel.countDocuments({ type: "hotel" });
+    const apartmentCount = await Hotel.countDocuments({ type: "apartment" });
+    const resortCount = await Hotel.countDocuments({ type: "resort" });
+    const villaCount = await Hotel.countDocuments({ type: "villa" });
+    const cabinCount = await Hotel.countDocuments({ type: "cabin" });
+
+    res.status(200).json([
+      { type: "hotel", count: hotelCount },
+      { type: "apartments", count: apartmentCount },
+      { type: "resorts", count: resortCount },
+      { type: "villas", count: villaCount },
+      { type: "cabins", count: cabinCount },
+    ]);
+  } catch (err) {
+    next(err);
   }
 };
