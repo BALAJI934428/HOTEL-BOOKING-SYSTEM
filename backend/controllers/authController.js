@@ -1,29 +1,43 @@
 import User from "../models/User.js";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import { createError } from "../utils/error.js";
+import jwt from "jsonwebtoken";
 
 export const register = async (req, res, next) => {
+  if (!req.body) return next(createError(400, "No data provided"));
+  if (!req.body.username || !req.body.email || !req.body.password) {
+    return next(createError(400, "Username, email and password are required"));
+  }
+
   try {
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(req.body.password, salt);
-    if (!hash) {
-      console.error("Error hashing password: No hash returned.");
-      return next(createError(500, "Error hashing password."));
-    }
-    console.log(hash, "balaji");
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(req.body.password, salt);
     const newUser = new User({
-      username: req.body.username,
-      email: req.body.email,
+      ...req.body,
       password: hash,
     });
-    const savedUser = await newUser.save();
-    if (!savedUser) {
-      console.error("Error saving user: No user returned.");
-      return next(createError(500, "Error saving user."));
-    }
-    res.status(201).send("User has been created.");
+
+    await newUser.save();
+    const user = await User.findOne({ username: req.body.username });
+    const token = jwt.sign(
+      { id: user._id, isAdmin: user.isAdmin },
+      process.env.JWT
+    );
+    const { password, isAdmin, ...otherDetails } = user._doc;
+    res
+      .cookie("access_token", token, {
+        httpOnly: true,
+      })
+      .status(200)
+      .json({ ...otherDetails, message: "User has been created" });
   } catch (err) {
+    if (err.name === "ValidationError") {
+      let errors = {};
+      Object.keys(err.errors).forEach((key) => {
+        errors[key] = err.errors[key].message;
+      });
+      return next(createError(400, errors));
+    }
     next(err);
   }
 };
